@@ -168,3 +168,10 @@ for step in range(MAX_EVALUATE_STEPS):
 
 env.close()
 ```
+
+## Environments
+* `NewYorkCity-v0`
+
+## Update Environments
+1. Remove all the files in `DeepRacer_gym/envs/new_york_city/executable` directory
+2. Download/Clone latest version of `env_info.py` from the repository and place in `DeepRacer_gym/envs/new_york_city/env_info.py`
