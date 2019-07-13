@@ -2,7 +2,7 @@ import gym
 
 
 def _register_deepracer_env(id, env_name, **kwargs):
-    entrypoint = 'DeepRacer_gym:{}'.format(env_name)
+    entrypoint = 'DeepRacer_gym.envs:{}'.format(env_name)
 
     gym.envs.registration.register(
         id=id,
@@ -15,6 +15,7 @@ def _register_deepracer_env(id, env_name, **kwargs):
 
 
 _register_deepracer_env('NewYorkCity-v0', 'NewYorkCityEnv', version=0)
+_register_deepracer_env('NewYorkCity-v1', 'NewYorkCityEnv', version=1)
 
 make = gym.make
 

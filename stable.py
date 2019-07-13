@@ -3,11 +3,9 @@ import sys
 import time
 import logging
 
-
 from DeepRacer_gym import CustomRewardWrapper
 from DeepRacer_gym import DeepRacerActionWrapper
 import DeepRacer_gym as deepracer
-
 
 from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv
@@ -40,12 +38,12 @@ def reward_fn(params):
 
 
 # Create environment
-env = deepracer.make('NewYorkCityEnv-v0')
+env = deepracer.make('NewYorkCity-v0')
 env = CustomRewardWrapper(env, reward_fn)
 env = DeepRacerActionWrapper(env, max_steering_angle = 30,
                                   steering_angle_granularity = 5,
-                                  max_speed = 1,
-                                  speed_granularity = 2)
+                                  max_speed = 3,
+                                  speed_granularity = 3)
 
 MAX_TRAINING_STEPS = 5000
 MAX_EVALUATE_STEPS = 1000
@@ -61,6 +59,9 @@ states = env.reset()
 for step in range(MAX_EVALUATE_STEPS):
     action, _states = model.predict(states)
     state, reward, done, info = env.step(action)
+
+    if info['is_clear']:
+        print("!!!Clear!!!")
 
 env.close()
 

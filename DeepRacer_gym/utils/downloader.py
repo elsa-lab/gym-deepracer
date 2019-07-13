@@ -8,6 +8,8 @@ import subprocess
 
 import zipfile
 
+LOG = logging.getLogger()
+
 def make_dirs(directory):
     try:
         os.makedirs(directory)
@@ -15,12 +17,20 @@ def make_dirs(directory):
         if e.errno != errno.EEXIST:
             raise
 
+def run_command(command, shell=False):
+    LOG.info("execute command: {}".format(command))
+    return subprocess.run(command, shell=shell)
+
+
 class GoogleDriveDownloader:
     @staticmethod
     def check_or_download(executable_path, download_id, filename, large_file=True, make_executable=True):
         
         if os.path.isfile(executable_path):
             return True
+        else:
+            LOG.warning("Executable file does not exist: {}".format(executable_path))
+            LOG.info("Downloading.....")
 
         dirname = os.path.dirname(executable_path)
         make_dirs(dirname)
@@ -29,14 +39,14 @@ class GoogleDriveDownloader:
 
         try:
             if large_file:
-                subprocess.run("wget --save-cookies cookies.txt 'https://docs.google.com/uc?export=download&id='{} -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1/p' > confirm.txt".format(download_id), shell=True)
-                subprocess.run("wget --load-cookies cookies.txt -O {} 'https://docs.google.com/uc?export=download&id='{}'&confirm='$(<confirm.txt)".format(name, download_id), shell=True)
+                run_command("wget --save-cookies cookies.txt 'https://docs.google.com/uc?export=download&id='{} -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\\1/p' > confirm.txt".format(download_id), shell=True)
+                run_command("wget --load-cookies cookies.txt -O {} 'https://docs.google.com/uc?export=download&id='{}'&confirm='$(<confirm.txt)".format(filename, download_id), shell=True)
 
-                subprocess.run(['rm', 'cookies.txt'])
-                subprocess.run(['rm', 'confirm.txt'])
+                run_command(['rm', 'cookies.txt'])
+                run_command(['rm', 'confirm.txt'])
 
             else:
-                subprocess.run("wget -O {} 'https://docs.google.com/uc?export=download&id='{}".format(name, download_id), shell=True)
+                run_command("wget -O {} 'https://docs.google.com/uc?export=download&id='{}".format(filename, download_id), shell=True)
         except:
             raise
 
@@ -45,7 +55,7 @@ class GoogleDriveDownloader:
 
 
         if make_executable:
-            subprocess.run("chmod +x {}".format(executable_path), shell=True)
+            run_command("chmod +x {}".format(executable_path), shell=True)
         
         return True
 

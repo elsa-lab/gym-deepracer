@@ -9,7 +9,7 @@ import numpy as np
 
 from DeepRacer_gym.utils.error import DeepRacerException
 
-class DeepRacerActionWrapper(gym.ActionWrapper):
+class DeepRacerActionWrapper(gym.Wrapper):
     def __init__(self, env, max_steering_angle,
                             steering_angle_granularity,
                             max_speed,
@@ -17,6 +17,8 @@ class DeepRacerActionWrapper(gym.ActionWrapper):
 
 
         super(DeepRacerActionWrapper, self).__init__(env)
+
+        self.env = env
 
         self.max_steering_angle = float(max_steering_angle)
         self.steering_angle_granularity = steering_angle_granularity
@@ -28,23 +30,27 @@ class DeepRacerActionWrapper(gym.ActionWrapper):
 
     def _create_action_space(self):
         
-        assert self.max_steering_angle >= 1 and self.max_steering_angle <= 30,
-                DeepRacerException('invalid steering angle: {0}, values must be between 1 and 30'.format(self.max_steering_angle))
+        assert self.max_steering_angle >= 1 and self.max_steering_angle <= 30, DeepRacerException('invalid steering angle: {0}, values must be between 1 and 30'.format(self.max_steering_angle))
 
-        assert isinstance(self.steering_angle_granularity, int) and self.steering_angle_granularity > 0,
-                DeepRacerException('invalid steering angle granularity: {0}, values must greater than 0'.format(self.steering_angle_granularity))
+        assert isinstance(self.steering_angle_granularity, int) and self.steering_angle_granularity > 0, DeepRacerException('invalid steering angle granularity: {0}, values must greater than 0'.format(self.steering_angle_granularity))
 
-        assert self.max_speed >= 0.8 and self.max_speed <= 8,
-                DeepRacerException('invalid max speed: {0}, values must be between 0.8 and 8'.format(self.max_speed))
+        assert self.max_speed >= 0.8 and self.max_speed <= 8, DeepRacerException('invalid max speed: {0}, values must be between 0.8 and 8'.format(self.max_speed))
 
-        assert isinstance(self.speed_granularity, int) and self.speed_granularity > 0,
-                DeepRacerException('invalid speed granularity: {0}, values must greater than 0'.format(self.speed_granularity))
-
+        assert isinstance(self.speed_granularity, int) and self.speed_granularity > 0, DeepRacerException('invalid speed granularity: {0}, values must greater than 0'.format(self.speed_granularity))
 
         self._speeds = np.flip(
                     np.linspace(self.max_speed, 0.0, num=self.speed_granularity, endpoint=False) )
-        self._steering_angles = np.flip(
-                    np.linspace(self.max_steering_angle, -self.max_steering_angle, num=self.steering_granularity, endpoint=True) )
+        
+
+
+
+        v = np.linspace(self.max_steering_angle, -self.max_steering_angle, num=self.steering_angle_granularity, endpoint=True)
+
+
+
+        self._steering_angles = np.flip(v)
+
+        
 
 
 
@@ -55,7 +61,7 @@ class DeepRacerActionWrapper(gym.ActionWrapper):
 
         self.action_list = []
 
-        for i in range(self.action_space):
+        for i in range(action_space_size):
 
             self.action_list.append( 
                     (self._steering_angles[ i//len(self._speeds) ], self._speeds[ i%len(self._speeds) ] ) )
@@ -64,6 +70,9 @@ class DeepRacerActionWrapper(gym.ActionWrapper):
     def action(self, act):
         return list(self.action_list[act])
 
+    def step(self, act):
+        action = self.action(act)
+        return self.env.step(action)
 
     def action_table(self):
         table = []
@@ -77,3 +86,6 @@ class DeepRacerActionWrapper(gym.ActionWrapper):
 
 
         return table
+
+    def close(self):
+        self.env.close()

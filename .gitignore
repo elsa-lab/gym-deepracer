@@ -124,3 +124,5 @@ dmypy.json
 .pyre/
 
 *.swp
+
+executable/

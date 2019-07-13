@@ -23,10 +23,18 @@
 ## Example 1
 
 ```python
+import os
+import sys
+import time
+import logging
+
 from DeepRacer_gym import CustomRewardWrapper
 from DeepRacer_gym import DeepRacerActionWrapper
 import DeepRacer_gym as deepracer
 
+LOG = logging.getLogger()
+
+# Define your custom reward function
 def reward_fn(params):
     '''
     Example of using all_wheels_on_track and speed
@@ -53,20 +61,22 @@ def reward_fn(params):
 
 
 # Create environment
-env = deepracer.make('NewYorkCityEnv-v0')
+env = deepracer.make('NewYorkCity-v0')
 env = CustomRewardWrapper(env, reward_fn)
 env = DeepRacerActionWrapper(env, max_steering_angle = 30,
                                   steering_angle_granularity = 5,
-                                  max_speed = 1,
-                                  speed_granularity = 2)
+                                  max_speed = 3,
+                                  speed_granularity = 3)
 
-# Print out action space info
+# Print action space info
 print(env.action_space)
 
-# Print out action table
+action_table = env.action_table()
+
+# Print action table
 print('Action number\t\tSteering\t\tSpeed')
-for t in env.action_table():
-    print('{}\t\t\t{}\t\t{}'.format(t['Action number'], t['Steering'], t['Speed']))
+for t in action_table:
+    print('{}\t\t\t{}\t\t\t{}'.format(t['Action number'], t['Steering'], t['Speed']))
 
 
 MAXIMUM_STEPS = 5000
@@ -75,7 +85,14 @@ done = True
 for step in range(MAXIMUM_STEPS):
     if done:
         state = env.reset()
-    state, reward, done, info = env.step(env.action_space.sample())
+
+    action = env.action_space.sample() # random sample
+    state, reward, done, info = env.step(action)
+
+
+    LOG.info("[step {:4d}] action: ({:10.2f}, {:10.2f}), speed: {:10.6f}, steering: {:10.2f}, xy: ({:10.6f}, {:10.6f}), all_wheels_on_track: {}, closest_waypoints: {}".format(
+                step, action_table[action]['Speed'], action_table[action]['Steering'], info['speed'], info['steering_angle'], info['x'], info['y'], info['all_wheels_on_track'], info['closest_waypoints']))
+
 
 env.close()
 ```
@@ -89,11 +106,9 @@ import sys
 import time
 import logging
 
-
 from DeepRacer_gym import CustomRewardWrapper
 from DeepRacer_gym import DeepRacerActionWrapper
 import DeepRacer_gym as deepracer
-
 
 from stable_baselines import PPO2
 from stable_baselines.common.vec_env import DummyVecEnv
@@ -126,12 +141,12 @@ def reward_fn(params):
 
 
 # Create environment
-env = deepracer.make('NewYorkCityEnv-v0')
+env = deepracer.make('NewYorkCity-v0')
 env = CustomRewardWrapper(env, reward_fn)
 env = DeepRacerActionWrapper(env, max_steering_angle = 30,
                                   steering_angle_granularity = 5,
-                                  max_speed = 1,
-                                  speed_granularity = 2)
+                                  max_speed = 3,
+                                  speed_granularity = 3)
 
 MAX_TRAINING_STEPS = 5000
 MAX_EVALUATE_STEPS = 1000
@@ -148,6 +163,8 @@ for step in range(MAX_EVALUATE_STEPS):
     action, _states = model.predict(states)
     state, reward, done, info = env.step(action)
 
-env.close()
+    if info['is_clear']:
+        print("!!!Clear!!!")
 
+env.close()
 ```

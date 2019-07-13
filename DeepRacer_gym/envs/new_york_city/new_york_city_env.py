@@ -5,26 +5,21 @@ import logging
 
 import gym
 
-from DeepRacer_gym import UnityEnvBase
+from DeepRacer_gym.envs import UnityEnvBase
 from DeepRacer_gym.utils.error import DeepRacerException
 from DeepRacer_gym.utils import GoogleDriveDownloader
 
 
-current_dir = os.path.dirname(os.path.realpath(__file__))
-
-ENV_VERSION = {
-        0: {'executable_path': os.path.join(current_dir, 'executable/v0/new_york_city.x86_64'),
-            'download_id': '15Z9vtfh_ZQGv9jNdVqnZEYwsdjWb9Rvd',
-            'filename': os.path.join(current_dir, 'executable/v0.zip')}
-        
-        1: {'executable_path': os.path.join(current_dir, 'executable/v1/new_york_city.x86_64'),
-            'download_id': '1Qo1t6fraKSxjyuOw-oTmX2xesN6m_8ir',
-            'filename': os.path.join(current_dir, 'executable/v1.zip')}
-}
+from .env_info import ENV_VERSION
 
 
-class NewYorkCityEnv(UnityEnvBase):
-    def __init__(self, version):
+class NewYorkCityEnv(gym.Env):
+    metadata = {'render.modes': ['rgb_array']}
+
+    def __init__(self, version, no_graphics=False):
+
+        super(NewYorkCityEnv, self).__init__()
+
 
         env_version = ENV_VERSION.get(version, None)
 
@@ -34,22 +29,31 @@ class NewYorkCityEnv(UnityEnvBase):
         if not GoogleDriveDownloader.check_or_download(executable_path=env_version['executable_path'],
                                                        download_id=env_version['download_id'],
                                                        filename=env_version['filename']):
-            DeepRacerException("Failed to download environment")
+            raise DeepRacerException("Failed to download environment")
 
-        super(NewYorkCityEnv, self).__init__(env_version['executable_file'], True, False)
 
-    def _reset(self):
-        return super(NewYorkCityEnv, self)._reset()
+        self._env = UnityEnvBase(env_version['executable_path'], no_graphics=no_graphics)
 
-    def _step(self, action):
+
+        self.metadata = self._env.metadata
+        self.reward_range = self._env.reward_range
+        self.action_space = self._env.action_space
+        self.observation_space = self._env.observation_space
+        self.number_agents = self._env.number_agents
+
+
+    def reset(self):
+        return self._env.reset()
+
+    def step(self, action):
         self._take_action(action)
 
         return self._current_step_info
 
     def _take_action(self, action): 
-        obs, reward, done, info = super(NewYorkCityEnv, self)._step(action)
+        obs, reward, done, info = self._env.step(action)
 
-        vec_obs = info['vector']
+        vec_obs = info['vector_observations']
 
         observation = {}
 
@@ -60,21 +64,23 @@ class NewYorkCityEnv(UnityEnvBase):
         observation['is_left_of_center'] = vec_obs[4] > 0
         observation['heading'] = vec_obs[5]
         observation['progress'] = vec_obs[6]
-        observation['steps'] = vec_obs[7]
+        observation['steps'] = int(vec_obs[7])
         observation['speed'] = vec_obs[8]
         observation['steering_angle'] = vec_obs[9]
         observation['track_width'] = vec_obs[10]
-        observation['waypoints_count'] = vec_obs[11]
+        observation['waypoints_count'] = int(vec_obs[11])
 
         observation['waypoints'] = []
 
-        for i in range(observation['waypoints_count']):
+        
+
+        for i in range( observation['waypoints_count'] ):
             x_index = 12 + i * 2
             y_index = 12 + i * 2 + 1
             observation['waypoints'].append( (vec_obs[x_index], vec_obs[y_index]) )
 
-        observation['closest_waypoints'] = [vec_obs[-2], vec_obs[-1]]
-
+        observation['closest_waypoints'] = [int(vec_obs[-3]), int(vec_obs[-2])]
+        observation['is_clear'] = vec_obs[-1] > 0
         observation['is_reversed'] = False
 
         self._current_step_info = (obs, reward, done, observation)
@@ -82,9 +88,23 @@ class NewYorkCityEnv(UnityEnvBase):
     def _get_reward(self):
         return self._current_step_info[1]
 
-    def _render(self, mode='human', close=False):
+    def _seed(self):
+        pass
+
+    def render(self, mode='human', close=False):
         pass
 
     def close(self):
-        super(NewYorkCityEnv, self).close()
+        try:
+            self._env.close()
+        except:
+            pass
+
+    def __del__(self):
+        try:
+            self._env.close()
+        except:
+            pass
+
+
 
