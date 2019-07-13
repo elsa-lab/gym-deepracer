@@ -1,7 +1,8 @@
 # DeepRacer Gym
 
 ## Param List
-```json
+* More info: [AWS DeepRacer Developer Guide](https://docs.aws.amazon.com/en_us/deepracer/latest/developerguide/deepracer-reward-function-input.html)
+```
 {
     "all_wheels_on_track": Boolean,    # flag to indicate if the vehicle is on the track
     "x": float,                        # vehicle's x-coordinate in meters
