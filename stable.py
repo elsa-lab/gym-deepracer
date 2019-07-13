@@ -9,6 +9,10 @@ from DeepRacer_gym import DeepRacerActionWrapper
 import DeepRacer_gym as deepracer
 
 
+from stable_baselines import PPO2
+from stable_baselines.common.vec_env import DummyVecEnv
+from stable_baselines.common.policies import MlpPolicy
+
 # Define your custom reward function
 def reward_fn(params):
     '''
@@ -43,22 +47,20 @@ env = DeepRacerActionWrapper(env, max_steering_angle = 30,
                                   max_speed = 1,
                                   speed_granularity = 2)
 
-# Print out action space info
-print(env.action_space)
+MAX_TRAINING_STEPS = 5000
+MAX_EVALUATE_STEPS = 1000
 
-# Print out action table
-print('Action number\t\tSteering\t\tSpeed')
-for t in env.action_table():
-    print('{}\t\t\t{}\t\t{}'.format(t['Action number'], t['Steering'], t['Speed']))
+# Create Dummy Env
+env = DummyVecEnv([lambda: env])
+
+model = PPO2(MlpPolicy, env, verbose=1)
+model.learn(total_timesteps=MAX_TRAINING_STEPS)
 
 
-MAXIMUM_STEPS = 5000
-
-done = True
-for step in range(MAXIMUM_STEPS):
-    if done:
-        state = env.reset()
-    state, reward, done, info = env.step(env.action_space.sample())
+states = env.reset()
+for step in range(MAX_EVALUATE_STEPS):
+    action, _states = model.predict(states)
+    state, reward, done, info = env.step(action)
 
 env.close()
 
