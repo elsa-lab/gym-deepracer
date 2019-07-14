@@ -38,20 +38,17 @@ class DeepRacerActionWrapper(gym.Wrapper):
 
         assert isinstance(self.speed_granularity, int) and self.speed_granularity > 0, DeepRacerException('invalid speed granularity: {0}, values must greater than 0'.format(self.speed_granularity))
 
-        self._speeds = np.flip(
-                    np.linspace(self.max_speed, 0.0, num=self.speed_granularity, endpoint=False) )
+        self._speeds = np.linspace(0.0, self.max_speed, num=self.speed_granularity + 1, endpoint=True)[1:]
+
+        #self._speeds = np.flip(
+        #            np.linspace(self.max_speed, 0.0, num=self.speed_granularity, endpoint=False) )
         
 
 
 
-        v = np.linspace(self.max_steering_angle, -self.max_steering_angle, num=self.steering_angle_granularity, endpoint=True)
+        self._steering_angles = np.linspace( -self.max_steering_angle, self.max_steering_angle, num=self.steering_angle_granularity, endpoint=True)
 
-
-
-        self._steering_angles = np.flip(v)
-
-        
-
+        #self._steering_angles = np.flip(v)
 
 
         action_space_size = len(self._speeds) * len(self._steering_angles)
