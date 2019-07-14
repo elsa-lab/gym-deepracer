@@ -57,7 +57,7 @@ MAX_EVALUATE_STEPS = 1000
 
 
 # Create Vec Env
-env = SubprocVecEnv([make_env for i in range(5)])
+env = SubprocVecEnv([make_env for i in range(6)])
 
 model = PPO2(MlpPolicy, env, verbose=1)
 model.learn(total_timesteps=MAX_TRAINING_STEPS)
