@@ -10,7 +10,7 @@
     "distance_from_center": float,     # distance in meters from the track center 
     "is_left_of_center": Boolean,      # Flag to indicate if the vehicle is on the left side to the track center or not. 
     "heading": float,                  # vehicle's yaw in degrees
-    "progress": float,                 # percentage of track completed
+    "progress": float,                 # percentage of track completed.
     "steps": int,                      # number steps completed
     "speed": float,                    # vehicle's speed in meters per second (m/s)
     "steering_angle": float,           # vehicle's steering angle in degrees
@@ -79,19 +79,16 @@ for t in action_table:
     print('{}\t\t\t{}\t\t\t{}'.format(t['Action number'], t['Steering'], t['Speed']))
 
 
-MAXIMUM_STEPS = 5000
+MAXIMUM_STEPS = 1000
 
-done = True
+state = env.reset()
 for step in range(MAXIMUM_STEPS):
-    if done:
-        state = env.reset()
 
     action = env.action_space.sample() # random sample
     state, reward, done, info = env.step(action)
 
-
-    LOG.info("[step {:4d}] action: ({:10.2f}, {:10.2f}), speed: {:10.6f}, steering: {:10.2f}, xy: ({:10.6f}, {:10.6f}), all_wheels_on_track: {}, closest_waypoints: {}".format(
-                step, action_table[action]['Speed'], action_table[action]['Steering'], info['speed'], info['steering_angle'], info['x'], info['y'], info['all_wheels_on_track'], info['closest_waypoints']))
+    LOG.info("[step {:4d}] action: ({:6.2f}, {:6.2f}), speed: {:10.6f}, steering: {:10.2f}, xy: ({:10.6f}, {:10.6f}), all_wheels_on_track: {}, closest_waypoints: {}".format(
+                info['steps'], action_table[action]['Speed'], action_table[action]['Steering'], info['speed'], info['steering_angle'], info['x'], info['y'], info['all_wheels_on_track'], info['closest_waypoints']))
 
 
 env.close()
@@ -163,15 +160,12 @@ for step in range(MAX_EVALUATE_STEPS):
     action, _states = model.predict(states)
     state, reward, done, info = env.step(action)
 
-    if info['is_clear']:
-        print("!!!Clear!!!")
+    if info['progress'] >= 99.99:
+        print("Track complete")
 
 env.close()
 ```
 
-## Environments
-* `NewYorkCity-v0`
 
-## Update Environments
-1. Remove all the files in `DeepRacer_gym/envs/new_york_city/executable` directory
-2. Download/Clone latest version of `env_info.py` from the repository and place in `DeepRacer_gym/envs/new_york_city/env_info.py`
+## Example 3: stable_baselines SubprocVecEnv
+

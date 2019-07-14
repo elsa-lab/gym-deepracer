@@ -1,9 +1,18 @@
+import os
+import sys
+import time
 import logging
+import multiprocessing
+
 import itertools
-import gym
 import numpy as np
-from mlagents.envs import UnityEnvironment
+
+import gym
 from gym import error, spaces
+
+from mlagents.envs import UnityEnvironment
+
+from DeepRacer_gym.utils import UNIVERSAL_LOCK
 
 '''
 
@@ -31,8 +40,7 @@ class UnityEnvBase(gym.Env):
     https://github.com/openai/multiagent-particle-envs
     """
 
-    worker_id = 0
-    env_pool = {}
+    worker_id = UNIVERSAL_LOCK
 
     def __init__(
         self,
@@ -58,8 +66,8 @@ class UnityEnvBase(gym.Env):
         """
         worker_id = UnityEnvBase._generate_new_env_id()
         self.worker_id = worker_id
-        UnityEnvBase._add_to_env_pool(self)
-        
+
+
         self._env = UnityEnvironment(
             environment_filename, worker_id, no_graphics=no_graphics
         )
@@ -292,14 +300,12 @@ class UnityEnvBase(gym.Env):
         """
         try:
             self._env.close()
-            UnityEnvBase._remove_env(self)
         except:
             pass
 
     def __del__(self):
         try:
             self._env.close()
-            UnityEnvBase._remove_env(self)
         except:
             pass
 
@@ -335,26 +341,12 @@ class UnityEnvBase(gym.Env):
 
     @staticmethod
     def _generate_new_env_id():
-        new_id = UnityEnvBase.worker_id
-        UnityEnvBase.worker_id += 1
+
+        with UnityEnvBase.worker_id.get_lock():
+            new_id = UnityEnvBase.worker_id.value
+            UnityEnvBase.worker_id.value += 1
+
         return new_id
-
-    @staticmethod
-    def _add_to_env_pool(env):
-        if env.worker_id in UnityEnvBase.env_pool:
-            raise UnityEnvBaseException(
-                    "The environment (worker_id={}) already exists in the env_pool".format(env.worker_id))
-
-        UnityEnvBase.env_pool[env.worker_id] = env
-
-    @staticmethod
-    def _remove_env(env):
-        if env.worker_id in UnityEnvBase.env_pool:
-            del UnityEnvBase.env_pool[env.worker_id]
-
-    @staticmethod
-    def get_env(env_id):
-        return UnityEnvBase.env_pool.get(env_id, None)
 
     @property
     def metadata(self):

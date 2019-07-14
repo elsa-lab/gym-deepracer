@@ -24,13 +24,13 @@ class NewYorkCityEnv(gym.Env):
         env_version = ENV_VERSION.get(version, None)
 
         if env_version is None:
-            DeepRacerException("invalid version number: {}".format(version))
+            raise DeepRacerException("invalid version number: {}".format(version))
+
 
         if not GoogleDriveDownloader.check_or_download(executable_path=env_version['executable_path'],
                                                        download_id=env_version['download_id'],
                                                        filename=env_version['filename']):
             raise DeepRacerException("Failed to download environment")
-
 
         self._env = UnityEnvBase(env_version['executable_path'], no_graphics=no_graphics)
 
@@ -79,8 +79,7 @@ class NewYorkCityEnv(gym.Env):
             y_index = 12 + i * 2 + 1
             observation['waypoints'].append( (vec_obs[x_index], vec_obs[y_index]) )
 
-        observation['closest_waypoints'] = [int(vec_obs[-3]), int(vec_obs[-2])]
-        observation['is_clear'] = vec_obs[-1] > 0
+        observation['closest_waypoints'] = [int(vec_obs[-2]), int(vec_obs[-1])]
         observation['is_reversed'] = False
 
         self._current_step_info = (obs, reward, done, observation)
