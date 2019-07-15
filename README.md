@@ -1,5 +1,7 @@
 # DeepRacer Gym
 
+![](https://github.com/Ending2015a/DeepRacer_gym/blob/master/gif/pic001.gif)
+
 ## Param List
 * More info: [AWS DeepRacer Developer Guide](https://docs.aws.amazon.com/en_us/deepracer/latest/developerguide/deepracer-reward-function-input.html)
 ```
