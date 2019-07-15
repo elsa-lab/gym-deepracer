@@ -169,3 +169,10 @@ env.close()
 
 ## Example 3: stable_baselines SubprocVecEnv
 * [example3.py](https://github.com/Ending2015a/DeepRacer_gym/blob/master/Examples/example3.py)
+
+## Environments
+* `NewYorkCity-v0`
+
+## Update Environments
+1. Remove all the files in `DeepRacer_gym/envs/new_york_city/executable` directory
+2. Download/Clone latest version of `env_info.py` from the repository and place in `DeepRacer_gym/envs/new_york_city/env_info.py`
